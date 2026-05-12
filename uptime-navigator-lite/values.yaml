@@ -78,7 +78,7 @@ verifier:
   concurrencyPolicy: Forbid
   archiveNodeApiUrl: ""
   batchSize: 500
-  heightBucket: 100
+  matchWindowSec: 90
   maxBatches: 20
   graphqlTimeout: 30
   logLevel: INFO

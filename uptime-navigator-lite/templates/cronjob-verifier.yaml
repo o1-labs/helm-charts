@@ -53,8 +53,8 @@ spec:
                       key: POSTGRES_PASSWORD
                 - name: VERIFIER_BATCH_SIZE
                   value: {{ .Values.verifier.batchSize | quote }}
-                - name: VERIFIER_HEIGHT_BUCKET
-                  value: {{ .Values.verifier.heightBucket | quote }}
+                - name: VERIFIER_MATCH_WINDOW_SEC
+                  value: {{ .Values.verifier.matchWindowSec | quote }}
                 - name: VERIFIER_MAX_BATCHES
                   value: {{ .Values.verifier.maxBatches | quote }}
                 - name: VERIFIER_GRAPHQL_TIMEOUT
