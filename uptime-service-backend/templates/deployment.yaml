@@ -5,6 +5,10 @@ metadata:
   name: {{ include "uptime-service-backend.fullname" . }}
   labels:
     {{- include "uptime-service-backend.labels" . | nindent 4 }}
+  {{- with .Values.deploymentAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
 spec:
   {{- if not .Values.autoscaling.enabled }}
   replicas: {{ .Values.replicaCount }}
@@ -152,6 +156,9 @@ spec:
             - name: {{ .Release.Name }}-keyspace-cert
               mountPath: /uptime/cert
             {{- end }}
+            {{- with .Values.extraVolumeMounts }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
       volumes:
         {{- if .Values.secret.keyspaceCert.override }}
         - name: {{ .Release.Name }}-keyspace-cert
@@ -169,6 +176,9 @@ spec:
             items:
               - key: gcp-sa-json
                 path: gcp-sa.json
+        {{- with .Values.extraVolumes }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}

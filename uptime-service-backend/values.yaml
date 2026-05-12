@@ -72,11 +72,11 @@ secret:
 
 image:
   # -- The repository of the image
-  repository: 673156464838.dkr.ecr.us-west-2.amazonaws.com/uptime-service-backend
+  repository: ghcr.io/o1-labs/uptime-service-backend
   # -- The pullPolicy used when pulling the image
   pullPolicy: IfNotPresent
   # -- The tag of the image. Overrides the image tag whose default is the chart appVersion.
-  tag: "2.0.0rc5-cb6524c"
+  tag: "main-main-de13d4e"
 
 # -- The secrets used to pull the image
 imagePullSecrets: []
@@ -94,6 +94,9 @@ serviceAccount:
   annotations: {}
   # -- The name of the service account to use.
   name: ""
+
+# -- Annotations to add to the Deployment object (e.g. argocd.argoproj.io/sync-wave)
+deploymentAnnotations: {}
 
 # -- Annotations to add to the pods
 podAnnotations: {}
@@ -125,7 +128,7 @@ ingress:
   # -- Whether to enable ingress
   enabled: false
   # -- Ingress class name
-  className: alb
+  className: nginx
   # -- Ingress Annotations
   annotations: {}
     # kubernetes.io/ingress.class: nginx
@@ -169,6 +172,12 @@ tolerations: []
 
 # -- Affinity rules
 affinity: {}
+
+# -- Extra volumes to attach to the pod (e.g. emptyDir for CONFIG_FILESYSTEM_PATH)
+extraVolumes: []
+
+# -- Extra volume mounts to attach to the backend container
+extraVolumeMounts: []
 
 # -- Lifecycle hooks
 lifecycle:

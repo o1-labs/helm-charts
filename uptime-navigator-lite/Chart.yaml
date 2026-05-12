@@ -1,0 +1,13 @@
+apiVersion: v2
+name: uptime-navigator-lite
+description: Minimal read-only navigator over the uptime-service-backend submissions table
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - uptime
+  - delegation
+  - navigator
+home: 'https://github.com/o1-labs/delegation-program-leaderboard/tree/main/lite'
+sources:
+  - 'https://github.com/o1-labs/delegation-program-leaderboard/tree/main/lite'
