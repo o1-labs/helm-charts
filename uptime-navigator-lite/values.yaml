@@ -69,3 +69,24 @@ podLabels: {}
 nodeSelector: {}
 tolerations: []
 affinity: {}
+
+verifier:
+  enabled: false
+  schedule: "*/10 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 3
+  concurrencyPolicy: Forbid
+  archiveNodeApiUrl: ""
+  batchSize: 500
+  heightBucket: 100
+  maxBatches: 20
+  graphqlTimeout: 30
+  logLevel: INFO
+  jobAnnotations: {}
+  resources:
+    requests:
+      cpu: 50m
+      memory: 128Mi
+    limits:
+      cpu: 200m
+      memory: 256Mi
