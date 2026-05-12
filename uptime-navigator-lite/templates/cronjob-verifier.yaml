@@ -1,0 +1,78 @@
+{{- if .Values.verifier.enabled -}}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "uptime-navigator-lite.fullname" . }}-verifier
+  labels:
+    {{- include "uptime-navigator-lite.labels" . | nindent 4 }}
+  {{- with .Values.verifier.jobAnnotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  schedule: {{ .Values.verifier.schedule | quote }}
+  successfulJobsHistoryLimit: {{ .Values.verifier.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.verifier.failedJobsHistoryLimit }}
+  concurrencyPolicy: {{ .Values.verifier.concurrencyPolicy }}
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            {{- include "uptime-navigator-lite.selectorLabels" . | nindent 12 }}
+            app.kubernetes.io/component: verifier
+        spec:
+          restartPolicy: OnFailure
+          serviceAccountName: {{ include "uptime-navigator-lite.serviceAccountName" . }}
+          {{- with .Values.imagePullSecrets }}
+          imagePullSecrets:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          containers:
+            - name: verifier
+              image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command: ["python3", "/app/api/verifier.py"]
+              env:
+                - name: ARCHIVE_NODE_API_URL
+                  value: {{ required "verifier.archiveNodeApiUrl is required when verifier.enabled" .Values.verifier.archiveNodeApiUrl | quote }}
+                - name: POSTGRES_HOST
+                  value: {{ .Values.postgres.host | quote }}
+                - name: POSTGRES_PORT
+                  value: {{ .Values.postgres.port | quote }}
+                - name: POSTGRES_DB
+                  value: {{ .Values.postgres.db | quote }}
+                - name: POSTGRES_USER
+                  value: {{ .Values.postgres.user | quote }}
+                - name: POSTGRES_SSLMODE
+                  value: {{ .Values.postgres.sslmode | quote }}
+                - name: POSTGRES_PASSWORD
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ include "uptime-navigator-lite.fullname" . }}
+                      key: POSTGRES_PASSWORD
+                - name: VERIFIER_BATCH_SIZE
+                  value: {{ .Values.verifier.batchSize | quote }}
+                - name: VERIFIER_HEIGHT_BUCKET
+                  value: {{ .Values.verifier.heightBucket | quote }}
+                - name: VERIFIER_MAX_BATCHES
+                  value: {{ .Values.verifier.maxBatches | quote }}
+                - name: VERIFIER_GRAPHQL_TIMEOUT
+                  value: {{ .Values.verifier.graphqlTimeout | quote }}
+                - name: LOG_LEVEL
+                  value: {{ .Values.verifier.logLevel | quote }}
+              resources:
+                {{- toYaml .Values.verifier.resources | nindent 16 }}
+          {{- with .Values.nodeSelector }}
+          nodeSelector:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.tolerations }}
+          tolerations:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          {{- with .Values.affinity }}
+          affinity:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+{{- end }}
