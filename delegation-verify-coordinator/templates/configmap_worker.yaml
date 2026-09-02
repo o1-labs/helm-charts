@@ -19,3 +19,15 @@ data:
 {{- range $name, $value := .Values.coordinator.worker.extraEnv }}
     export {{ $name }}={{ $value | quote }}
 {{- end }}
+  {{- /*
+    Same reasoning for files: this ConfigMap is the only volume the coordinator
+    mounts into a worker Job (at /bin/entrypoint), so a file the worker needs at
+    runtime - e.g. a post-hard-fork genesis ledger that did not exist when the
+    image was built - can only reach it from here. Point the worker at it with
+    extraEnv, e.g. GENESIS_LEDGER_FILE_POST_FORK=/bin/entrypoint/<name>.
+    Keep these small: a ConfigMap is capped at 1 MiB in total.
+  */}}
+{{- range $name, $content := .Values.coordinator.worker.extraFiles }}
+  {{ $name }}: |-
+{{ $content | indent 4 }}
+{{- end }}

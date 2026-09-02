@@ -69,6 +69,14 @@ coordinator:
     # entrypoint; these are exported there. Use for worker-only flags such as
     # TOLERATE_SOK_MISMATCH. Empty renders an empty script and changes nothing.
     extraEnv: {}
+    # -- Extra files for the delegation-verify worker, as filename/content pairs.
+    # Rendered into the worker ConfigMap, which is the only volume the coordinator
+    # mounts into a worker Job (at /bin/entrypoint). Use for runtime inputs that
+    # did not exist at image build time - a post-hard-fork genesis ledger, say -
+    # and point the worker at them via extraEnv
+    # (GENESIS_LEDGER_FILE_POST_FORK: /bin/entrypoint/mainnet-post-fork.json).
+    # Small files only: the whole ConfigMap is capped at 1 MiB.
+    extraFiles: {}
   aws:
     # -- AWS Cassandra Host
     host: "cassandra.us-west-2.amazonaws.com"
