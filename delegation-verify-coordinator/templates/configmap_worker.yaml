@@ -5,3 +5,17 @@ metadata:
 data:
   entrypoint-worker.sh: |-
 {{ .Files.Get "files/entrypoint_worker.sh" | indent 4 }}
+  {{- /*
+    The coordinator assembles each worker Job's env from a fixed list in
+    server.py, so setting a variable on the coordinator does not make it reach
+    the worker. Anything the delegation-verify worker itself reads - e.g.
+    TOLERATE_SOK_MISMATCH - has to arrive through the entrypoint, which is what
+    this file is for. Empty by default, so a deployment that sets nothing renders
+    an empty script and behaves exactly as before.
+  */}}
+  worker-env.sh: |-
+    #!/usr/bin/env bash
+    # Rendered from coordinator.worker.extraEnv - do not edit in the cluster.
+{{- range $name, $value := .Values.coordinator.worker.extraEnv }}
+    export {{ $name }}={{ $value | quote }}
+{{- end }}
