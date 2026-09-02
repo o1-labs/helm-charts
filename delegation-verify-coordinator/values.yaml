@@ -63,6 +63,12 @@ coordinator:
       limit:
     # -- TTL Seconds After Finished
     ttlSecondsAfterFinished: 43200 # half a day
+    # -- Extra environment for the delegation-verify worker, as name/value pairs.
+    # The coordinator builds each worker Job's env from a fixed list in its own
+    # source, so variables outside that list can only reach the worker through the
+    # entrypoint; these are exported there. Use for worker-only flags such as
+    # TOLERATE_SOK_MISMATCH. Empty renders an empty script and changes nothing.
+    extraEnv: {}
   aws:
     # -- AWS Cassandra Host
     host: "cassandra.us-west-2.amazonaws.com"
