@@ -1,0 +1,87 @@
+{{- if .Values.leaderboardGraphql.enabled }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "delegation-program-leaderboard.fullname" . }}-graphql
+  labels:
+    {{- include "delegation-program-leaderboard.labels" . | nindent 4 }}-graphql
+spec:
+  {{- with .Values.leaderboardGraphql }}
+  replicas: {{ .replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "delegation-program-leaderboard.selectorLabels" $ | nindent 6 }}-graphql
+  template:
+    metadata:
+      annotations:
+        # Roll the pods when the database credentials change.
+        checksum/db: {{ include (print $.Template.BasePath "/secret-graphql.yaml") $ | sha256sum }}
+        {{- with .podAnnotations }}
+        {{- toYaml . | nindent 8 }}
+        {{- end }}
+      labels:
+        {{- include "delegation-program-leaderboard.selectorLabels" $ | nindent 8 }}-graphql
+    spec:
+      {{- with .imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "delegation-program-leaderboard.serviceAccountName" $ }}
+      securityContext:
+        {{- toYaml .podSecurityContext | nindent 8 }}
+      containers:
+        - name: leaderboard-graphql
+          securityContext:
+            {{- toYaml .securityContext | nindent 12 }}
+          image: "{{ .image.repository }}:{{ required "leaderboardGraphql.image.tag is required (main-<sha> or vX.Y.Z)" .image.tag }}"
+          imagePullPolicy: {{ .image.pullPolicy }}
+          {{- with .lifecycle }}
+          lifecycle:
+            {{- toYaml . | nindent 12 }}
+          {{- end }}
+          env:
+            - name: POSTGRES_HOST
+              value: {{ .db.host | default $.Values.delegationProgramDB.host | quote }}
+            - name: POSTGRES_PORT
+              value: {{ .db.port | default $.Values.delegationProgramDB.port | quote }}
+            - name: POSTGRES_DB
+              value: {{ .db.name | default $.Values.delegationProgramDB.name | quote }}
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "delegation-program-leaderboard.fullname" $ }}-graphql-db
+                  key: user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ include "delegation-program-leaderboard.fullname" $ }}-graphql-db
+                  key: password
+            - name: POSTGRES_SSLMODE
+              value: {{ .db.sslmode | quote }}
+            {{- with .extraEnvVars }}
+            {{- toYaml . | nindent 12 }}
+            {{- end }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          livenessProbe:
+            {{- toYaml .livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .resources | nindent 12 }}
+      {{- with .nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+  {{- end }}
+{{- end }}

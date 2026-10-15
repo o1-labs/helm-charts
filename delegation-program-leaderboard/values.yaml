@@ -136,6 +136,122 @@ leaderboardWeb:
         - -c
         - sleep 15 && kill -SIGQUIT 1
 
+# configuration options for the uptime-graphql deployment: internal, read-only GraphQL API over the
+# coordinator database (see graphql/README.md in o1-labs/delegation-program-leaderboard)
+leaderboardGraphql:
+  # -- Whether to deploy uptime-graphql
+  enabled: false
+
+  # -- The number of replicas
+  replicaCount: 1
+
+  image:
+    # -- The repository of the image
+    repository: ghcr.io/o1-labs/uptime-graphql
+    # -- The pullPolicy used when pulling the image
+    pullPolicy: IfNotPresent
+    # -- The tag of the image, required when enabled (`main-<sha>` or `vX.Y.Z`)
+    tag: ""
+
+  # -- The secrets used to pull the image
+  imagePullSecrets: []
+
+  # -- Annotations to add to the pods
+  podAnnotations: {}
+
+  # -- The Pod Security Context. The image's USER is the name `app` (uid 10001); runAsNonRoot needs the
+  # numeric uid, or the kubelet cannot verify it and refuses to start the container
+  podSecurityContext:
+    runAsNonRoot: true
+    runAsUser: 10001
+
+  # -- The Security Context
+  securityContext:
+    allowPrivilegeEscalation: false
+    capabilities:
+      drop:
+      - ALL
+
+  service:
+    # -- The type of service to create
+    type: ClusterIP
+    # -- The port of the service (the container listens on 8080)
+    port: 8080
+
+  db:
+    # -- Database host. Defaults to `delegationProgramDB.host`
+    host: ""
+    # -- Database port. Defaults to `delegationProgramDB.port`
+    port: ""
+    # -- Database name. Defaults to `delegationProgramDB.name`
+    name: ""
+    # -- Database user, required when enabled. Use the read-only role (e.g. `o1labs-ro`); stored in a Secret
+    user: ""
+    # -- Database password, required when enabled; stored in a Secret
+    password: ""
+    # -- libpq sslmode
+    sslmode: prefer
+
+  # -- Extra Environment Variables, e.g. IS_UP_WINDOW_MINUTES, MAX_PAGE_SIZE, MAX_QUERY_DEPTH,
+  # STATEMENT_TIMEOUT_MS, DB_POOL_MAX_SIZE, MAX_ACTIVITY_DAYS, MAX_ACTIVITY_BUCKETS, MAX_REQUEST_BUCKETS
+  extraEnvVars: []
+
+  # -- Liveness probe: the process runs; does not touch the database
+  livenessProbe:
+    httpGet:
+      path: /healthz
+      port: http
+    periodSeconds: 10
+
+  # -- Readiness probe: `SELECT 1` on the database. The service may wait up to 5 s for a pool
+  # connection, so keep timeoutSeconds above 5
+  readinessProbe:
+    httpGet:
+      path: /readyz
+      port: http
+    periodSeconds: 10
+    timeoutSeconds: 6
+    failureThreshold: 3
+
+  # -- Resource limitations for the pods
+  resources: {}
+
+  # -- Node selector labels
+  nodeSelector: {}
+
+  # -- Tolerations
+  tolerations: []
+
+  # -- Affinity rules
+  affinity: {}
+
+  # -- Lifecycle hooks: give the endpoints time to drop the pod before uvicorn gets SIGTERM
+  lifecycle:
+    preStop:
+      exec:
+        command:
+        - sh
+        - -c
+        - sleep 10
+
+  # A separate Ingress for the GraphQL API, so that its auth annotations (e.g. oauth2-proxy) never
+  # apply to the public leaderboard Ingress
+  ingress:
+    # -- Whether to create the GraphQL Ingress
+    enabled: false
+    # -- The Ingress Class Name to use
+    className: ""
+    # -- The Ingress Annotations, e.g. nginx.ingress.kubernetes.io/auth-url and auth-signin for oauth2-proxy
+    annotations: {}
+    # -- A list of DNS names for the GraphQL API
+    hosts: []
+    #  - host: uptime-graphql.example.com
+    # -- The TLS configuration
+    tls: []
+    #  - secretName: uptime-graphql-tls
+    #    hosts:
+    #      - uptime-graphql.example.com
+
 # -- configuration options for leaderboard api deployment
 leaderboardApi:
   # -- Swagger host URL
