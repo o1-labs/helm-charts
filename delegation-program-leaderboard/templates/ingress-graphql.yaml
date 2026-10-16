@@ -1,0 +1,45 @@
+{{- /*
+A separate Ingress, so that auth annotations (e.g. oauth2-proxy) on the
+internal GraphQL API never apply to the public leaderboard Ingress.
+*/ -}}
+{{- if and .Values.leaderboardGraphql.enabled .Values.leaderboardGraphql.ingress.enabled }}
+{{- with .Values.leaderboardGraphql.ingress }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ include "delegation-program-leaderboard.fullname" $ }}-graphql
+  labels:
+    {{- include "delegation-program-leaderboard.labels" $ | nindent 4 }}-graphql
+  {{- with .annotations }}
+  annotations:
+    {{- toYaml . | nindent 4 }}
+  {{- end }}
+spec:
+  {{- with .className }}
+  ingressClassName: {{ . }}
+  {{- end }}
+  {{- if .tls }}
+  tls:
+    {{- range .tls }}
+    - hosts:
+        {{- range .hosts }}
+        - {{ . | quote }}
+        {{- end }}
+      secretName: {{ .secretName }}
+    {{- end }}
+  {{- end }}
+  rules:
+    {{- range .hosts }}
+    - host: {{ .host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ include "delegation-program-leaderboard.fullname" $ }}-graphql
+                port:
+                  number: {{ $.Values.leaderboardGraphql.service.port }}
+    {{- end }}
+{{- end }}
+{{- end }}
